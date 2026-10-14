@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
+
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+
+  --font-sans: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+}
+
+/* ─── Base ───────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold leading-tight;
+}
+
+/* ─── Custom Component Classes ──────────────────────────────────────────────── */
+@layer components {
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-5 py-2.5
+           text-sm font-semibold text-white shadow-sm transition-all duration-200
+           hover:bg-green-700 hover:shadow-md active:scale-95
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300
+           bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm
+           transition-all duration-200 hover:bg-gray-50 hover:border-gray-400
+           active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400
+           focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Ghost / text button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+           text-sm font-medium text-gray-600 transition-colors hover:text-gray-900
+           hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300;
+  }
+
+  /* Danger button */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5
+           text-sm font-semibold text-white shadow-sm transition-all duration-200
+           hover:bg-red-700 active:scale-95 focus:outline-none focus-visible:ring-2
+           focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm p-6 transition-shadow hover:shadow-md;
+  }
+
+  /* Form field */
+  .form-field {
+    @apply flex flex-col gap-1.5;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .form-input {
+    @apply w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm
+           placeholder-gray-400 shadow-sm transition-all
+           focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20
+           disabled:bg-gray-50 disabled:cursor-not-allowed;
+  }
+
+  .form-error {
+    @apply text-xs text-red-600 mt-0.5;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+  }
+
+  .badge-green {
+    background-color: #dcfce7;
+    color: #15803d;
+  }
+
+  .badge-amber {
+    background-color: #fef3c7;
+    color: #b45309;
+  }
+
+  .badge-blue {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .badge-gray {
+    background-color: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .badge-red {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+
+  /* Status indicators */
+  .status-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    background-color: #fef3c7;
+    color: #b45309;
+  }
+
+  .status-confirmed {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    background-color: #dcfce7;
+    color: #15803d;
+  }
+
+  .status-cancelled {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+
+  /* Section heading */
+  .section-title {
+    @apply text-2xl font-bold text-gray-900;
+  }
+
+  /* Mock data warning banner */
+  .mock-banner {
+    @apply flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50
+           px-4 py-2 text-xs text-amber-700 font-medium;
+  }
+}
+
+/* ─── Loading skeleton ───────────────────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton {
+  @apply bg-gray-200 rounded-lg animate-pulse;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* ─── Page transitions ───────────────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.3s ease-out both;
+}
+
+/* ─── Map overrides ──────────────────────────────────────────────────────────── */
+.leaflet-container {
+  @apply rounded-2xl;
+  z-index: 0;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
