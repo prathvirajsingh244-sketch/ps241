@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -57,10 +57,10 @@ class AuthSignupResponse(BaseModel):
 
 
 class ProfileUpdateRequest(BaseModel):
-    display_name: str | None = None
-    preferred_language: Language | None = None
-    education_level: str | None = None
-    district: str | None = None
+    display_name: Optional[str] = None
+    preferred_language: Optional[Language] = None
+    education_level: Optional[str] = None
+    district: Optional[str] = None
 
 
 class SourceOut(BaseModel):
@@ -70,9 +70,9 @@ class SourceOut(BaseModel):
     publisher: str
     source_url: str
     source_type: str
-    last_verified_at: str | None = None
+    last_verified_at: Optional[str] = None
     verification_status: Literal["verified", "unverified", "pending"]
-    notes: str | None = None
+    notes: Optional[str] = None
 
 
 class CareerOut(BaseModel):
@@ -81,15 +81,15 @@ class CareerOut(BaseModel):
     category: str
     overview: str
     eligibility: str
-    skills: list[str]
+    skills: List[str]
     training_path: str
     progression_path: str
     language: Language
     status: Literal["draft", "published"]
     created_at: str
     updated_at: str
-    sources: list[SourceOut]
-    video_url: str | None = None
+    sources: List[SourceOut]
+    video_url: Optional[str] = None
 
 
 class CareerListItem(BaseModel):
@@ -102,7 +102,7 @@ class CareerListItem(BaseModel):
 
 
 class CareerListResponse(BaseModel):
-    items: list[CareerListItem]
+    items: List[CareerListItem]
     total: int
     page: int
     page_size: int
@@ -111,7 +111,7 @@ class CareerListResponse(BaseModel):
 class AssessmentQuestion(BaseModel):
     id: str
     prompt: str
-    answer_options: list[str]
+    answer_options: List[str]
     category: str
     order_index: int
 
@@ -119,7 +119,7 @@ class AssessmentQuestion(BaseModel):
 class AssessmentQuestionSet(BaseModel):
     assessment_id: str
     version: int
-    questions: list[AssessmentQuestion]
+    questions: List[AssessmentQuestion]
 
 
 class AssessmentAnswer(BaseModel):
@@ -128,13 +128,13 @@ class AssessmentAnswer(BaseModel):
 
 
 class AssessmentAttemptRequest(BaseModel):
-    answers: list[AssessmentAnswer]
+    answers: List[AssessmentAnswer]
 
 
 class AssessmentResult(BaseModel):
     id: str
-    suggested_career_ids: list[str]
-    suggested_careers: list[CareerListItem]
+    suggested_career_ids: List[str]
+    suggested_careers: List[CareerListItem]
     created_at: str
 
 
@@ -146,13 +146,13 @@ class AssessmentAttemptResponse(BaseModel):
 
 class CounsellingMessageRequest(BaseModel):
     message: str
-    conversation_id: str | None = None
-    language: Language | None = None
+    conversation_id: Optional[str] = None
+    language: Optional[Language] = None
 
 
 class CounsellingResponse(BaseModel):
     answer: str
-    source_refs: list[str]
+    source_refs: List[str]
     needs_human_followup: bool
     fallback_used: bool
     conversation_id: str
@@ -167,7 +167,7 @@ class SkillLocationOut(BaseModel):
     longitude: float
     description: str
     source_id: str
-    last_verified_at: str | None = None
+    last_verified_at: Optional[str] = None
     status: Literal["active", "inactive"]
 
 
@@ -175,7 +175,7 @@ class VideoTemplateOut(BaseModel):
     id: str
     name: str
     description: str
-    fields: list[str]
+    fields: List[str]
 
 
 class VideoJobRequest(BaseModel):
@@ -183,7 +183,7 @@ class VideoJobRequest(BaseModel):
     template_id: str
     title: str
     language: Language = "en"
-    script: str | None = None
+    script: Optional[str] = None
 
 
 class VideoJobOut(BaseModel):
@@ -191,7 +191,7 @@ class VideoJobOut(BaseModel):
     status: Literal["pending", "processing", "completed", "failed"]
     career_id: str
     title: str
-    video_url: str | None = None
+    video_url: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -204,16 +204,16 @@ class MeetingSlot(BaseModel):
 
 class MeetingRequestPayload(BaseModel):
     summary: str
-    preferred_slots: list[MeetingSlot]
+    preferred_slots: List[MeetingSlot]
     consent: bool = True
-    contact_info: str | None = None
+    contact_info: Optional[str] = None
 
 
 class MeetingRequestOut(BaseModel):
     id: str
     summary: str
-    preferred_slots: list[MeetingSlot]
-    confirmed_slot: MeetingSlot | None = None
+    preferred_slots: List[MeetingSlot]
+    confirmed_slot: Optional[MeetingSlot] = None
     status: Literal["pending", "confirmed", "alternate_proposed", "cancelled"]
     consent: bool
     created_at: str
@@ -225,8 +225,8 @@ class MeetingOut(BaseModel):
     request_id: str
     start_at: str
     timezone: str
-    meet_url: str | None = None
-    calendar_event_id: str | None = None
+    meet_url: Optional[str] = None
+    calendar_event_id: Optional[str] = None
     status: Literal["scheduled", "completed", "cancelled"]
 
 
@@ -242,7 +242,7 @@ class AdminOverview(BaseModel):
 
 
 class ErrorDetail(BaseModel):
-    field: str | None = None
+    field: Optional[str] = None
     message: str
 
 

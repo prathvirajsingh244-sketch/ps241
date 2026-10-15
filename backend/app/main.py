@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -72,7 +72,7 @@ def user_public(user: dict[str, Any]) -> UserPublic:
     )
 
 
-USER_DB: dict[str, dict[str, Any]] = {
+USER_DB: Dict[str, Dict[str, Any]] = {
     'arjun@example.com': {
         'id': 'user-001',
         'display_name': 'Arjun Sharma',
@@ -103,13 +103,13 @@ USER_DB: dict[str, dict[str, Any]] = {
 }
 
 
-def get_user_by_email(email: str | None) -> dict[str, Any] | None:
+def get_user_by_email(email: Optional[str]) -> Optional[Dict[str, Any]]:
     if not email:
         return None
     return USER_DB.get(email.lower())
 
 
-def require_role(role: str, email: str) -> dict[str, Any]:
+def require_role(role: str, email: str) -> Dict[str, Any]:
     user = get_user_by_email(email)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
@@ -361,7 +361,7 @@ def list_my_meeting_requests(current_email: str = Depends(get_current_user_email
 
 
 @app.patch(settings.api_prefix + '/meetings/requests/{request_id}', response_model=MeetingRequestOut)
-def update_meeting_request(request_id: str, payload: dict[str, Any], current_email: str = Depends(get_current_user_email)):
+def update_meeting_request(request_id: str, payload: Dict[str, Any], current_email: str = Depends(get_current_user_email)):
     user = get_user_by_email(current_email)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
