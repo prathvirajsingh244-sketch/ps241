@@ -1,6 +1,6 @@
-// SkillSaathi TypeScript Types — matches /api/v1 API contract draft
+// MaargMitra TypeScript Types — matches /api/v1 API contract draft
 
-export type UserRole = 'learner' | 'counsellor' | 'admin';
+export type UserRole = 'learner' | 'parent' | 'counsellor' | 'admin';
 export type Language = 'en' | 'hi';
 
 export interface User {
@@ -22,6 +22,7 @@ export interface SignupPayload {
   email: string;
   password: string;
   preferred_language?: Language;
+  role?: UserRole;
 }
 
 export interface LoginPayload {

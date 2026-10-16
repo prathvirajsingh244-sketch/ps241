@@ -5,7 +5,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-UserRole = Literal["learner", "counsellor", "admin"]
+UserRole = Literal["learner", "parent", "counsellor", "admin"]
 Language = Literal["en", "hi"]
 
 
@@ -252,5 +252,49 @@ class ErrorEnvelope(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "ok"
-    service: str = "skillsaathi-api"
+    service: str = "maargmitra-api"
     version: str = "0.1.0"
+
+
+class ParentExpectationsIn(BaseModel):
+    salary_range: str
+    preferred_field: str
+    future_goal: str
+    notes: Optional[str] = None
+
+
+class ParentExpectationsOut(BaseModel):
+    id: str
+    parent_id: str
+    salary_range: str
+    preferred_field: str
+    future_goal: str
+    notes: Optional[str] = None
+    created_at: str
+
+
+class ComparisonItem(BaseModel):
+    topic: str
+    parent_view: str
+    student_view: str
+    aligned: bool
+
+
+class ComparisonReport(BaseModel):
+    summary: str
+    alignment_score: int
+    items: List[ComparisonItem]
+    recommendation: str
+
+
+class RoadmapStep(BaseModel):
+    step: int
+    title: str
+    description: str
+    duration: str
+    completed: bool = False
+
+
+class RoadmapOut(BaseModel):
+    career_title: str
+    steps: List[RoadmapStep]

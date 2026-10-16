@@ -332,4 +332,5 @@ export const systemApi = {
   },
 };
 
+export const api = apiClient;
 export default apiClient;

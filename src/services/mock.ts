@@ -1,5 +1,5 @@
 /**
- * SkillSaathi Mock Data
+ * MaargMitra Mock Data
  * ─────────────────────────────────────────────────────────────────
  * SAMPLE DATA — clearly labelled. This is NOT verified real data.
  * These mocks are temporary fallbacks used when VITE_USE_MOCK=true.

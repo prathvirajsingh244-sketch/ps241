@@ -1,1 +1,1 @@
-"""SkillSaathi backend package."""
+"""MaargMitra backend package."""

@@ -181,7 +181,7 @@ export default function CounsellorRequest() {
 
           <div className="mt-4 text-xs text-gray-400 text-center">
             Meeting confirmation and Google Meet link are provided by the counsellor via the backend.
-            SkillSaathi does not create Meet links on the frontend.
+            मार्गमित्र (MaargMitra) does not create Meet links on the frontend.
           </div>
         </div>
       </PageWrapper>

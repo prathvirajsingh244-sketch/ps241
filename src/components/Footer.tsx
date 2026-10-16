@@ -10,10 +10,10 @@ export default function Footer() {
           <div>
             <Link to="/" className="flex items-center gap-2 text-base font-bold text-green-700">
               <BookOpen className="h-5 w-5" />
-              <span>SkillSaathi</span>
+              <span>मार्गमित्र (MaargMitra)</span>
             </Link>
             <p className="mt-2 text-sm text-gray-500">
-              Vocational career guidance for students and families. SIH 2026 — PS 241.
+              Vocational career guidance for students and families.
             </p>
           </div>
 
@@ -54,13 +54,13 @@ export default function Footer() {
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400">Notice</h3>
             <p className="mt-3 text-xs text-gray-500 leading-relaxed">
-              SkillSaathi provides guidance based on verified sources. It does not guarantee employment, salary, placement, safety or career outcomes. Consult a qualified counsellor for personal decisions.
+              मार्गमित्र (MaargMitra) provides guidance based on verified sources. It does not guarantee employment, salary, placement, safety or career outcomes. Consult a qualified counsellor for personal decisions.
             </p>
           </div>
         </div>
 
         <div className="mt-8 border-t border-gray-100 pt-6 text-center text-xs text-gray-400">
-          <p>© 2026 SkillSaathi — SIH 2026 PS-241. Sample data clearly labelled. Sources: NSDC, DGET, Government of India portals.</p>
+          <p>© 2026 मार्गमित्र (MaargMitra). Sample data clearly labelled. Sources: NSDC, DGET, Government of India portals.</p>
         </div>
       </div>
     </footer>

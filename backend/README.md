@@ -1,6 +1,6 @@
-# SkillSaathi Backend
+# मार्गमित्र (MaargMitra) Backend
 
-This backend is a FastAPI implementation for the SkillSaathi project. It follows the member handoff contract and is designed to work with the existing frontend API client.
+This backend is a FastAPI implementation for the मार्गमित्र (MaargMitra) project. It follows the member handoff contract and is designed to work with the existing frontend API client.
 
 ## Quick start
 

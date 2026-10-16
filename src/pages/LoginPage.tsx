@@ -26,7 +26,20 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      navigate(from, { replace: true });
+      const tokenUser = JSON.parse(localStorage.getItem('mm_user') || 'null');
+      if (from && from !== '/') {
+        navigate(from, { replace: true });
+      } else if (tokenUser?.role === 'parent') {
+        navigate('/parent', { replace: true });
+      } else if (tokenUser?.role === 'learner') {
+        navigate('/dashboard', { replace: true });
+      } else if (tokenUser?.role === 'counsellor') {
+        navigate('/counsellor/requests', { replace: true });
+      } else if (tokenUser?.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err) {
       setApiError(parseApiError(err));
     } finally {
@@ -43,7 +56,7 @@ export default function LoginPage() {
               <BookOpen className="h-7 w-7 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="mt-1 text-sm text-gray-500">Sign in to your SkillSaathi account</p>
+            <p className="mt-1 text-sm text-gray-500">Sign in to your मार्गमित्र (MaargMitra) account</p>
           </div>
 
           {apiError && (

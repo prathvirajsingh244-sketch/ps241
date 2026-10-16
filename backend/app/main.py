@@ -1,5 +1,19 @@
 from __future__ import annotations
 
+# Fix for Python 3.9 compatibility with Pydantic JSON schema generation
+try:
+    import pydantic.json_schema
+    _orig_get_literal_values = pydantic.json_schema.get_literal_values
+    def _patched_get_literal_values(annotation, **kwargs):
+        for val in _orig_get_literal_values(annotation, **kwargs):
+            if hasattr(val, '__args__'):
+                yield from _patched_get_literal_values(val, **kwargs)
+            else:
+                yield val
+    pydantic.json_schema.get_literal_values = _patched_get_literal_values
+except Exception:
+    pass
+
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -42,6 +56,12 @@ from app.schemas import (
     VideoJobOut,
     VideoJobRequest,
     VideoTemplateOut,
+    ParentExpectationsIn,
+    ParentExpectationsOut,
+    ComparisonReport,
+    ComparisonItem,
+    RoadmapOut,
+    RoadmapStep,
 )
 from app.security import create_access_token, get_current_user_email, hash_password, verify_password
 
@@ -82,25 +102,28 @@ USER_DB: Dict[str, Dict[str, Any]] = {
         'created_at': iso_now(),
         'password_hash': hash_password('password123'),
     },
-    'counsellor@skillsathi.in': {
+    'counsellor@maargmitra.in': {
         'id': 'user-counsellor-001',
         'display_name': 'Meera Singh',
-        'email': 'counsellor@skillsathi.in',
+        'email': 'counsellor@maargmitra.in',
         'role': 'counsellor',
         'preferred_language': 'en',
         'created_at': iso_now(),
         'password_hash': hash_password('counsellor123'),
     },
-    'admin@skillsathi.in': {
+    'admin@maargmitra.in': {
         'id': 'user-admin-001',
-        'display_name': 'SkillSaathi Admin',
-        'email': 'admin@skillsathi.in',
+        'display_name': 'MaargMitra Admin',
+        'email': 'admin@maargmitra.in',
         'role': 'admin',
         'preferred_language': 'en',
         'created_at': iso_now(),
         'password_hash': hash_password('admin123'),
     },
 }
+
+# In-memory store for parent expectations
+PARENT_EXPECTATIONS_DB: Dict[str, Dict[str, Any]] = {}
 
 
 def get_user_by_email(email: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -120,7 +143,7 @@ def require_role(role: str, email: str) -> Dict[str, Any]:
 
 @app.get(settings.api_prefix + '/health', response_model=HealthResponse)
 def health() -> dict[str, str]:
-    return {'status': 'ok', 'service': 'skillsaathi-api', 'version': settings.app_version}
+    return {'status': 'ok', 'service': 'maargmitra-api', 'version': settings.app_version}
 
 
 @app.post(settings.api_prefix + '/auth/signup', response_model=AuthSignupResponse)
@@ -276,17 +299,90 @@ def counselling_message(payload: CounsellingMessageRequest):
     if not message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Message is required')
 
-    answer = (
-        'Based on the verified information available, the ITI Electrician trade is one of the most widely recognised vocational qualifications in India. '
-        'Training typically takes 1–2 years through a government ITI and leads to NCVT certification. Employment prospects are generally stable in construction, '
-        'manufacturing and services. Please consult a local counsellor or the nearest ITI for current admission and placement details.'
-    )
+    msg_lower = message.lower()
+    is_hindi = payload.language == 'hi' or any('\u0900' <= ch <= '\u097F' for ch in message)
+
+    # Contextual knowledge base mapping
+    if any(k in msg_lower for k in ['salary', 'कमाई', 'सैलरी', 'पैसे', 'package', 'earn']):
+        if is_hindi:
+            answer = (
+                "वोकेशनल और ITI ट्रेड्स में शुरुआती सैलरी ₹12,000 से ₹25,000/माह होती है। "
+                "2–3 साल के अनुभव, अप्रेंटिसशिप और NCVT सर्टिफिकेशन के बाद कुशल तकनीशियन ₹35,000 से ₹60,000+ प्रति माह कमाते हैं, "
+                "और कई अपना खुद का उद्यम या कॉन्ट्रैक्टिंग व्यवसाय भी शुरू करते हैं।"
+            )
+        else:
+            answer = (
+                "Entry-level vocational careers typically start at ₹12,000–₹25,000/month. "
+                "With 2–3 years of hands-on experience, NCVT certification, or specialized trade skills (like Solar or CNC machining), "
+                "earnings grow to ₹35,000–₹60,000+/month, with strong opportunities for self-employment."
+            )
+        sources = ['DGET Wage Survey 2024', 'NSDC Vocational Placement Report']
+        needs_human = False
+
+    elif any(k in msg_lower for k in ['solar', 'सोलर', 'green', 'energy', 'अक्षय ऊर्जा']):
+        if is_hindi:
+            answer = (
+                "सोलर पीवी इंस्टॉलर (Suryamitra) एक अत्यंत मांग वाला हरित रोजगार है। यह 3 महीने का राष्ट्रीय कौशल प्रमाणन कोर्स है, "
+                "जिसके लिए न्यूनतम योग्यता 10वीं पास या ITI (इलेक्ट्रीशियन/फिटर) है। MNRE और Skill Council for Green Jobs द्वारा मान्यता प्राप्त।"
+            )
+        else:
+            answer = (
+                "Solar PV Installer (Suryamitra Skill Development Program) is a rapidly expanding green vocational path. "
+                "It takes 3 months (600 hours) under the Skill Council for Green Jobs (SCGJ). "
+                "Eligibility is Class 10 / ITI in electrical/mechanical trades."
+            )
+        sources = ['MNRE Suryamitra Guidelines 2024', 'Skill Council for Green Jobs']
+        needs_human = False
+
+    elif any(k in msg_lower for k in ['admission', 'iti', 'एडमिशन', 'फॉर्म', 'apply', 'आवेदन']):
+        if is_hindi:
+            answer = (
+                "सरकारी ITI में एडमिशन हर साल जून–जुलाई में राज्य स्तरीय ऑनलाइन काउंसलिंग (जैसे NCVT MIS या राज्य ITI पोर्टल) के माध्यम से होता है। "
+                "अधिकांश ट्रेड्स 10वीं पास पर उपलब्ध हैं, और कुछ ट्रेड्स 8वीं पास पर भी स्वीकार करते हैं। सरकारी ITI की फीस नाममात्र (लगभग ₹1,000–₹2,500/वर्ष) होती है।"
+            )
+        else:
+            answer = (
+                "Government ITI admissions open annually between June and July through state online counselling portals (NCVT MIS). "
+                "Most technical trades require Class 10 pass with Science and Maths. Fees in government institutes are highly subsidised (~₹1,000–₹2,500/year)."
+            )
+        sources = ['NCVT MIS Admission Portal 2024', 'Directorate General of Training (DGT)']
+        needs_human = False
+
+    elif any(k in msg_lower for k in ['parent', 'parents', 'माता-पिता', 'परिवार', 'mismatch', 'confused', 'दबाव']):
+        if is_hindi:
+            answer = (
+                "माता-पिता स्वाभाविक रूप से अपने बच्चे के सुरक्षित भविष्य की चिंता करते हैं। आप हमारे पैरेंट डैशबोर्ड में 'Expectations Form' भरवा सकते हैं, "
+                "जहाँ हमारा AI तुलना रिपोर्ट तैयार करता है। यदि कोई मतभेद है, तो आप हमारे मानव काउंसलर के साथ निःशुल्क सत्र बुक कर सकते हैं।"
+            )
+        else:
+            answer = (
+                "It is common for parents and students to have differing expectations regarding careers and stability. "
+                "Our Parent Dashboard features an AI Comparison Report that bridges this gap constructively. "
+                "If concerns persist, you can book a 1-on-1 session with our human career counsellors."
+            )
+        sources = ['MaargMitra Career Guidance Framework', 'Parental Counselling Protocol']
+        needs_human = True
+
+    else:
+        if is_hindi:
+            answer = (
+                f"आपके सवाल '{message}' के संबंध में: वोकेशनल शिक्षा (ITI, PMKVY, पॉलिटेक्निक) व्यावहारिक कौशल और व्यावहारिक रोजगार पर केंद्रित है। "
+                "आप हमारे 'Career Explorer' में 250+ करियर देख सकते हैं या अपनी रुचियों के आधार पर 'Gamified Assessment' पूरा कर सकते हैं।"
+            )
+        else:
+            answer = (
+                f"Regarding '{message}': Vocational pathways under NSDC and DGET provide certified practical skills with structured progression. "
+                "We recommend taking our Career Assessment to find your top 3 trade matches, or checking the Skill Centre Map for training hubs near you."
+            )
+        sources = ['NSDC National Occupational Standards', 'DGET ITI Documentation']
+        needs_human = False
+
     return {
         'answer': answer,
-        'source_refs': ['NSDC — National Occupational Standards for Electrician', 'DGET ITI Curriculum Documentation 2024-25'],
-        'needs_human_followup': False,
+        'source_refs': sources,
+        'needs_human_followup': needs_human,
         'fallback_used': False,
-        'conversation_id': payload.conversation_id or 'conv-demo-001',
+        'conversation_id': payload.conversation_id or f'conv-{uuid.uuid4()}',
     }
 
 
@@ -414,7 +510,78 @@ def admin_create_career(payload: dict[str, Any], current_email: str = Depends(ge
     return CareerOut(**career)
 
 
+# ── Parent Endpoints ──────────────────────────────────────────────────────────
+
+@app.post(settings.api_prefix + '/parent/expectations', response_model=ParentExpectationsOut)
+def save_parent_expectations(payload: ParentExpectationsIn, current_email: str = Depends(get_current_user_email)):
+    user = get_user_by_email(current_email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    record = {
+        'id': f'exp-{uuid.uuid4()}',
+        'parent_id': user['id'],
+        'salary_range': payload.salary_range,
+        'preferred_field': payload.preferred_field,
+        'future_goal': payload.future_goal,
+        'notes': payload.notes,
+        'created_at': iso_now(),
+    }
+    PARENT_EXPECTATIONS_DB[user['id']] = record
+    return ParentExpectationsOut(**record)
+
+
+@app.get(settings.api_prefix + '/parent/expectations/me', response_model=Optional[ParentExpectationsOut])
+def get_parent_expectations(current_email: str = Depends(get_current_user_email)):
+    user = get_user_by_email(current_email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    record = PARENT_EXPECTATIONS_DB.get(user['id'])
+    if not record:
+        return None
+    return ParentExpectationsOut(**record)
+
+
+@app.get(settings.api_prefix + '/parent/comparison', response_model=ComparisonReport)
+def get_comparison_report(current_email: str = Depends(get_current_user_email)):
+    user = get_user_by_email(current_email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    expectations = PARENT_EXPECTATIONS_DB.get(user['id'])
+    salary = expectations['salary_range'] if expectations else 'Not specified'
+    field = expectations['preferred_field'] if expectations else 'Not specified'
+    return ComparisonReport(
+        summary='Comparison based on parent expectations and student assessment results.',
+        alignment_score=72,
+        items=[
+            ComparisonItem(topic='Preferred Field', parent_view=field, student_view='Engineering & Technology', aligned=field in ['Engineering', 'Technology', 'Engineering & Technology']),
+            ComparisonItem(topic='Expected Salary', parent_view=salary, student_view='₹15,000–₹25,000/month (entry level)', aligned=False),
+            ComparisonItem(topic='Work Environment', parent_view='Office/Indoor preferred', student_view='Comfortable with outdoor/on-site', aligned=False),
+            ComparisonItem(topic='Training Duration', parent_view='Short course preferred', student_view='More than 1 year (ITI/Diploma)', aligned=False),
+        ],
+        recommendation='There are some expectation gaps. A counsellor session is recommended to align on career goals.',
+    )
+
+
+# ── Roadmap Endpoint ──────────────────────────────────────────────────────────
+
+@app.get(settings.api_prefix + '/roadmap/me', response_model=RoadmapOut)
+def get_my_roadmap(current_email: str = Depends(get_current_user_email)):
+    user = get_user_by_email(current_email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+    return RoadmapOut(
+        career_title='Electrician (ITI)',
+        steps=[
+            RoadmapStep(step=1, title='Complete Class 10', description='Pass Class 10 with Science and Mathematics.', duration='As applicable', completed=True),
+            RoadmapStep(step=2, title='Apply to Government ITI', description='Fill ITI admission form (NCVT/SCVT). Deadline usually June–July.', duration='1 month', completed=False),
+            RoadmapStep(step=3, title='ITI Electrician Trade (2 years)', description='Complete 2-year Electrician course at ITI. Covers wiring, circuits, safety.', duration='2 years', completed=False),
+            RoadmapStep(step=4, title='NCVT Certification Exam', description='Appear for National Council for Vocational Training exam.', duration='2 months', completed=False),
+            RoadmapStep(step=5, title='Apprenticeship', description='Join apprenticeship under Apprentices Act 1961 at a company.', duration='1 year', completed=False),
+            RoadmapStep(step=6, title='First Job / Self Employment', description='Apply for Junior Electrician roles or start as an independent contractor.', duration='Ongoing', completed=False),
+        ]
+    )
+
+
 if __name__ == '__main__':
     import uvicorn
-
     uvicorn.run('app.main:app', host='0.0.0.0', port=8000, reload=True)

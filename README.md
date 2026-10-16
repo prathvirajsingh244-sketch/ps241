@@ -1,6 +1,6 @@
-# SkillSaathi Frontend
+# मार्गमित्र (MaargMitra) Frontend
 
-SkillSaathi is a vocational career guidance frontend for SIH 2026 Problem Statement 241. The app is built with React, TypeScript, Vite, Tailwind CSS, React Router and Axios, with a central API layer and mock fallback data for demo and integration readiness.
+मार्गमित्र (MaargMitra) is a vocational career guidance platform. The app is built with React, TypeScript, Vite, Tailwind CSS, React Router and Axios, with a central API layer and mock fallback data for demo and integration readiness.
 
 ## Stack
 

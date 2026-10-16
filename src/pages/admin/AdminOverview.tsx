@@ -46,7 +46,7 @@ export default function AdminOverviewPage() {
           </div>
           <div>
             <h1 className="section-title">Admin Dashboard</h1>
-            <p className="text-sm text-gray-500">SkillSaathi operational overview</p>
+            <p className="text-sm text-gray-500">मार्गमित्र (MaargMitra) operational overview</p>
           </div>
         </div>
 

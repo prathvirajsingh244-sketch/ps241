@@ -7,7 +7,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (displayName: string, email: string, password: string, lang?: 'en' | 'hi') => Promise<void>;
+  signup: (displayName: string, email: string, password: string, lang?: 'en' | 'hi', role?: 'learner' | 'parent') => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(me);
   }, []);
 
-  const signup = useCallback(async (displayName: string, email: string, password: string, lang: 'en' | 'hi' = 'en') => {
-    await authApi.signup({ display_name: displayName, email, password, preferred_language: lang });
+  const signup = useCallback(async (displayName: string, email: string, password: string, lang: 'en' | 'hi' = 'en', role: 'learner' | 'parent' = 'learner') => {
+    await authApi.signup({ display_name: displayName, email, password, preferred_language: lang, role });
     await login(email, password);
   }, [login]);
 
