@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.ai_service import generate_counselling_reply
 from app.config import settings
 from app.data import (
     ADMIN_OVERVIEW,
@@ -299,89 +300,12 @@ def counselling_message(payload: CounsellingMessageRequest):
     if not message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Message is required')
 
-    msg_lower = message.lower()
-    is_hindi = payload.language == 'hi' or any('\u0900' <= ch <= '\u097F' for ch in message)
-
-    # Contextual knowledge base mapping
-    if any(k in msg_lower for k in ['salary', 'कमाई', 'सैलरी', 'पैसे', 'package', 'earn']):
-        if is_hindi:
-            answer = (
-                "वोकेशनल और ITI ट्रेड्स में शुरुआती सैलरी ₹12,000 से ₹25,000/माह होती है। "
-                "2–3 साल के अनुभव, अप्रेंटिसशिप और NCVT सर्टिफिकेशन के बाद कुशल तकनीशियन ₹35,000 से ₹60,000+ प्रति माह कमाते हैं, "
-                "और कई अपना खुद का उद्यम या कॉन्ट्रैक्टिंग व्यवसाय भी शुरू करते हैं।"
-            )
-        else:
-            answer = (
-                "Entry-level vocational careers typically start at ₹12,000–₹25,000/month. "
-                "With 2–3 years of hands-on experience, NCVT certification, or specialized trade skills (like Solar or CNC machining), "
-                "earnings grow to ₹35,000–₹60,000+/month, with strong opportunities for self-employment."
-            )
-        sources = ['DGET Wage Survey 2024', 'NSDC Vocational Placement Report']
-        needs_human = False
-
-    elif any(k in msg_lower for k in ['solar', 'सोलर', 'green', 'energy', 'अक्षय ऊर्जा']):
-        if is_hindi:
-            answer = (
-                "सोलर पीवी इंस्टॉलर (Suryamitra) एक अत्यंत मांग वाला हरित रोजगार है। यह 3 महीने का राष्ट्रीय कौशल प्रमाणन कोर्स है, "
-                "जिसके लिए न्यूनतम योग्यता 10वीं पास या ITI (इलेक्ट्रीशियन/फिटर) है। MNRE और Skill Council for Green Jobs द्वारा मान्यता प्राप्त।"
-            )
-        else:
-            answer = (
-                "Solar PV Installer (Suryamitra Skill Development Program) is a rapidly expanding green vocational path. "
-                "It takes 3 months (600 hours) under the Skill Council for Green Jobs (SCGJ). "
-                "Eligibility is Class 10 / ITI in electrical/mechanical trades."
-            )
-        sources = ['MNRE Suryamitra Guidelines 2024', 'Skill Council for Green Jobs']
-        needs_human = False
-
-    elif any(k in msg_lower for k in ['admission', 'iti', 'एडमिशन', 'फॉर्म', 'apply', 'आवेदन']):
-        if is_hindi:
-            answer = (
-                "सरकारी ITI में एडमिशन हर साल जून–जुलाई में राज्य स्तरीय ऑनलाइन काउंसलिंग (जैसे NCVT MIS या राज्य ITI पोर्टल) के माध्यम से होता है। "
-                "अधिकांश ट्रेड्स 10वीं पास पर उपलब्ध हैं, और कुछ ट्रेड्स 8वीं पास पर भी स्वीकार करते हैं। सरकारी ITI की फीस नाममात्र (लगभग ₹1,000–₹2,500/वर्ष) होती है।"
-            )
-        else:
-            answer = (
-                "Government ITI admissions open annually between June and July through state online counselling portals (NCVT MIS). "
-                "Most technical trades require Class 10 pass with Science and Maths. Fees in government institutes are highly subsidised (~₹1,000–₹2,500/year)."
-            )
-        sources = ['NCVT MIS Admission Portal 2024', 'Directorate General of Training (DGT)']
-        needs_human = False
-
-    elif any(k in msg_lower for k in ['parent', 'parents', 'माता-पिता', 'परिवार', 'mismatch', 'confused', 'दबाव']):
-        if is_hindi:
-            answer = (
-                "माता-पिता स्वाभाविक रूप से अपने बच्चे के सुरक्षित भविष्य की चिंता करते हैं। आप हमारे पैरेंट डैशबोर्ड में 'Expectations Form' भरवा सकते हैं, "
-                "जहाँ हमारा AI तुलना रिपोर्ट तैयार करता है। यदि कोई मतभेद है, तो आप हमारे मानव काउंसलर के साथ निःशुल्क सत्र बुक कर सकते हैं।"
-            )
-        else:
-            answer = (
-                "It is common for parents and students to have differing expectations regarding careers and stability. "
-                "Our Parent Dashboard features an AI Comparison Report that bridges this gap constructively. "
-                "If concerns persist, you can book a 1-on-1 session with our human career counsellors."
-            )
-        sources = ['MaargMitra Career Guidance Framework', 'Parental Counselling Protocol']
-        needs_human = True
-
-    else:
-        if is_hindi:
-            answer = (
-                f"आपके सवाल '{message}' के संबंध में: वोकेशनल शिक्षा (ITI, PMKVY, पॉलिटेक्निक) व्यावहारिक कौशल और व्यावहारिक रोजगार पर केंद्रित है। "
-                "आप हमारे 'Career Explorer' में 250+ करियर देख सकते हैं या अपनी रुचियों के आधार पर 'Gamified Assessment' पूरा कर सकते हैं।"
-            )
-        else:
-            answer = (
-                f"Regarding '{message}': Vocational pathways under NSDC and DGET provide certified practical skills with structured progression. "
-                "We recommend taking our Career Assessment to find your top 3 trade matches, or checking the Skill Centre Map for training hubs near you."
-            )
-        sources = ['NSDC National Occupational Standards', 'DGET ITI Documentation']
-        needs_human = False
-
+    response = generate_counselling_reply(message, payload.language, settings.gemini_api_key)
     return {
-        'answer': answer,
-        'source_refs': sources,
-        'needs_human_followup': needs_human,
-        'fallback_used': False,
+        'answer': response['answer'],
+        'source_refs': response.get('source_refs', []),
+        'needs_human_followup': response.get('needs_human_followup', False),
+        'fallback_used': response.get('fallback_used', False),
         'conversation_id': payload.conversation_id or f'conv-{uuid.uuid4()}',
     }
 

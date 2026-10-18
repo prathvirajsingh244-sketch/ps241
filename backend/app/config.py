@@ -14,6 +14,8 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175,http://127.0.0.1:5176,"
         "http://127.0.0.1:5177,http://127.0.0.1:5178"
     )
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-flash-latest"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
