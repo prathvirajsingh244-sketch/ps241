@@ -137,7 +137,7 @@ export default function CareerDetails() {
                 <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-amber-800 leading-relaxed">
                   This profile is for guidance only. मार्गमित्र (MaargMitra) does not guarantee employment, salary or career outcomes.
-                  Verify information with official sources before making decisions.
+                  Use AI counsellor as a guide only. Verify information with official sources before making decisions.
                 </p>
               </div>
             </div>
