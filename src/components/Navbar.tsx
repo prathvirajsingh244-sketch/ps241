@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X, BookOpen, LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Menu, X, LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
@@ -49,9 +49,11 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Main navigation">
         {/* Logo — Always navigates to main landing page */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 via-rose-500 to-orange-500 text-slate-950 shadow-md group-hover:scale-105 transition-transform">
-            <BookOpen className="h-5 w-5 font-bold" aria-hidden />
-          </div>
+          <img
+            src="/logo.jpeg"
+            alt="MaargMitra logo"
+            className="h-10 w-10 rounded-xl object-cover border border-white/10 bg-slate-900 shadow-md group-hover:scale-105 transition-transform"
+          />
           <div className="flex flex-col leading-none">
             <span className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
               मार्गमित्र <span className="text-amber-400 font-extrabold text-xs tracking-wider">MaargMitra</span>
