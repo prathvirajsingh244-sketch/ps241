@@ -1,5 +1,5 @@
 ---
-description: Start the PS241 (SkillSathi) frontend and backend dev servers and open the project in the browser
+description: Start the PS241 (MaargMitra) frontend and backend dev servers and open the project in the browser
 ---
 
 > ⚠️ **RULE: Never run `git commit` or `git push` automatically. Always wait for explicit user instruction before committing any changes.**
