@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, Bot, User, AlertTriangle, Mic } from 'lucide-react';
+import { Send, MessageCircle, Bot, User, AlertTriangle, Mic, VolumeX } from 'lucide-react';
 import { counsellingApi, parseApiError } from '../services/api';
 import type { CounsellingMessage, CounsellingResponse } from '../types';
 import { LoadingSpinner } from '../components/LoadingState';
@@ -8,6 +8,13 @@ import MockBanner from '../components/MockBanner';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: any;
+    SpeechRecognition?: any;
+  }
+}
+
 export default function CounsellingChat() {
   const [messages, setMessages] = useState<CounsellingMessage[]>([]);
   const [input, setInput] = useState('');
@@ -15,11 +22,182 @@ export default function CounsellingChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  const resetRecognition = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {
+        // ignore stale listener cleanup errors
+      }
+      recognitionRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    const hasSpeechRecognition = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+    const isSecure = window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseSupported = Boolean(hasSpeechRecognition && isSecure);
+    setVoiceSupported(baseSupported);
+
+    const checkPermission = async () => {
+      if (!baseSupported || !navigator.permissions?.query) return;
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        if (permissionStatus.state === 'denied') {
+          setVoiceSupported(false);
+          setError('Microphone access is blocked in this browser. Please allow mic access in the browser settings and refresh the page.');
+        }
+      } catch {
+        // ignore permission-query failures and keep the default browser behavior
+      }
+    };
+
+    checkPermission();
+
+    return () => {
+      resetRecognition();
+      window.speechSynthesis?.cancel();
+    };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  const speakText = (text: string, selectedLanguage: 'en' | 'hi') => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = selectedLanguage === 'hi' ? 'hi-IN' : 'en-US';
+    utterance.rate = 0.96;
+    utterance.pitch = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) => {
+      const candidate = voice.lang.toLowerCase();
+      if (selectedLanguage === 'hi') return candidate.startsWith('hi');
+      return candidate.startsWith('en');
+    });
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const startListening = async () => {
+    const isSecure = window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!voiceSupported || !isSecure) {
+      setError('Voice input is not available here. Please open this app on localhost or allow browser microphone access, or type your question instead.');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      resetRecognition();
+    }
+
+    try {
+      if (navigator.permissions?.query) {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        if (permissionStatus.state === 'denied') {
+          setVoiceSupported(false);
+          setError('Microphone access is blocked in this browser. Please allow mic access in the browser settings and refresh the page.');
+          return;
+        }
+      }
+
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    } catch {
+      setVoiceSupported(false);
+      setError('Microphone permission was blocked. Please allow mic access and try again.');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceSupported(false);
+      setError('This browser does not support voice input. Please use Chrome or Edge and allow microphone access.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setError('');
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0]?.transcript ?? '')
+        .join(' ')
+        .trim();
+
+      if (transcript) {
+        setInput(transcript);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      const errorCode = event?.error || '';
+      const isBlocked = ['not-allowed', 'service-not-allowed', 'permission-denied', 'audio-capture'].includes(errorCode);
+      const isNetworkIssue = errorCode === 'network';
+
+      if (isBlocked || isNetworkIssue) {
+        setVoiceSupported(false);
+      }
+
+      const msg = errorCode === 'no-speech'
+        ? 'No speech detected. Please try again.'
+        : isBlocked
+          ? 'Microphone access is blocked or denied. Please allow mic access in the browser and refresh the page.'
+          : isNetworkIssue
+            ? 'The speech service could not connect. Please try again in a moment or use text input instead.'
+            : errorCode === 'aborted'
+              ? 'Listening was interrupted. Please try again.'
+              : 'Unable to listen right now. Please try again. If this keeps happening, please allow mic access or use the keyboard input instead.';
+      setError(msg);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+    } catch {
+      setVoiceSupported(false);
+      setError('Microphone permission was blocked or the browser refused to start listening. Please allow mic access and try again.');
+      setIsListening(false);
+      resetRecognition();
+    }
+  };
+
+  const stopListening = () => {
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      // ignore stop errors on already-closed recognition objects
+    }
+    setIsListening(false);
+    recognitionRef.current = null;
+  };
 
   const sendMessage = async () => {
     const text = input.trim();
@@ -52,6 +230,7 @@ export default function CounsellingChat() {
         source_refs: res.source_refs,
       };
       setMessages((prev) => [...prev, assistantMsg]);
+      speakText(res.answer, language);
 
       if (res.needs_human_followup) {
         const followupMsg: CounsellingMessage = {
@@ -96,7 +275,7 @@ export default function CounsellingChat() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <label htmlFor="language-toggle" className="text-xs text-gray-500">Language:</label>
+              <label htmlFor="language-toggle" className="text-xs text-gray-500">Answer language:</label>
               <select
                 id="language-toggle"
                 value={language}
@@ -226,12 +405,13 @@ export default function CounsellingChat() {
             </div>
             <div className="flex flex-col gap-2">
               <button
-                title="Voice input — requires backend voice service support"
-                disabled
-                className="btn-secondary p-2.5 opacity-40 cursor-not-allowed"
-                aria-label="Voice input (not yet available)"
+                title={isListening ? 'Stop voice input' : 'Use voice input'}
+                onClick={isListening ? stopListening : startListening}
+                disabled={isLoading}
+                className={`p-2.5 ${isListening ? 'bg-rose-600 text-white ring-2 ring-rose-200' : 'btn-secondary'} ${!voiceSupported ? 'opacity-40 cursor-not-allowed' : ''}`}
+                aria-label={isListening ? 'Stop voice input' : 'Voice input'}
               >
-                <Mic className="h-4 w-4" />
+                {isListening ? <VolumeX className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
               <button
                 id="counselling-send"
@@ -245,7 +425,9 @@ export default function CounsellingChat() {
             </div>
           </div>
           <p className="mt-1 text-xs text-gray-400 text-center">
-            Voice input requires backend speech service — currently unavailable. Text input always works.
+            {voiceSupported
+              ? 'Use the mic to speak your question. The AI will answer in the selected language and read it aloud.'
+              : 'Voice input needs browser microphone support. Please use a Chrome/Edge browser and allow mic permission, or type your question instead.'}
           </p>
         </div>
       </PageWrapper>
