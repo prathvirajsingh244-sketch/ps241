@@ -316,8 +316,11 @@ def get_skill_centres():
 
 
 @app.get(settings.api_prefix + '/videos', response_model=list[dict[str, Any]])
-def list_videos():
-    return VIDEO_ITEMS
+def list_videos(language: str | None = Query(default=None, alias='language')):
+    items = VIDEO_ITEMS
+    if language:
+        items = [video for video in items if video.get('language') == language]
+    return items
 
 
 @app.get(settings.api_prefix + '/videos/templates', response_model=list[VideoTemplateOut])

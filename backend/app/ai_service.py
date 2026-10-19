@@ -141,13 +141,14 @@ def _parse_gemini_response(raw_response: str) -> str:
 
 
 def generate_counselling_reply(message: str, language: str, api_key: str | None = None) -> dict[str, Any]:
-    if should_use_gemini(api_key or settings.gemini_api_key):
+    active_key = settings.gemini_api_key if api_key is None else api_key
+    if should_use_gemini(active_key):
         try:
             payload = build_gemini_payload(message, language)
             request_data = json.dumps(payload).encode('utf-8')
             request_url = (
                 f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
-                f"?key={(api_key or settings.gemini_api_key).strip()}"
+                f"?key={active_key.strip()}"
             )
             req = request.Request(
                 request_url,
