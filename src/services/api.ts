@@ -33,7 +33,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000,
+  timeout: 45000,
 });
 
 // Attach Bearer token to every request
@@ -185,7 +185,9 @@ export const counsellingApi = {
       await new Promise((r) => setTimeout(r, 1200));
       return mockData.counsellingResponse;
     }
-    const res = await apiClient.post<CounsellingResponse>('/counselling/messages', payload);
+    const res = await apiClient.post<CounsellingResponse>('/counselling/messages', payload, {
+      timeout: 45000,
+    });
     return res.data;
   },
 };

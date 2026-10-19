@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import socket
 from typing import Any
 from urllib import error, request
 
@@ -156,7 +157,7 @@ def generate_counselling_reply(message: str, language: str, api_key: str | None 
                 headers={'Content-Type': 'application/json'},
                 method='POST',
             )
-            with request.urlopen(req, timeout=30) as response:
+            with request.urlopen(req, timeout=12) as response:
                 body = response.read().decode('utf-8')
             answer = _parse_gemini_response(body)
             return {
@@ -165,7 +166,7 @@ def generate_counselling_reply(message: str, language: str, api_key: str | None 
                 'needs_human_followup': 'human' in message.lower() or 'parent' in message.lower() or 'confused' in message.lower(),
                 'fallback_used': False,
             }
-        except (ValueError, json.JSONDecodeError, error.URLError, error.HTTPError):
+        except (ValueError, json.JSONDecodeError, error.URLError, error.HTTPError, TimeoutError, socket.timeout, OSError):
             pass
 
     return _fallback_reply(message, language)
