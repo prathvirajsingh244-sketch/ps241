@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, BookOpen, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { parseApiError } from '../services/api';
 
@@ -51,9 +51,9 @@ export default function LoginPage() {
     <div className="flex min-h-[80vh] items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="card p-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 mb-4">
-              <BookOpen className="h-7 w-7 text-green-600" />
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 w-full max-w-[360px] rounded-[26px] border border-slate-200 bg-white/95 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+              <img src="/logo.jpeg" alt="MaargMitra logo" className="mx-auto h-24 w-auto object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
             <p className="mt-1 text-sm text-gray-500">Sign in to your मार्गमित्र (MaargMitra) account</p>

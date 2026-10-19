@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, BookOpen, AlertCircle, GraduationCap, Users } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, GraduationCap, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { parseApiError } from '../services/api';
 
@@ -61,9 +61,9 @@ export default function SignupPage() {
     <div className="flex min-h-[85vh] items-center justify-center px-4 py-10 bg-gradient-to-b from-gray-50 to-emerald-50/30">
       <div className="w-full max-w-lg">
         <div className="card p-8 shadow-xl border border-gray-100 rounded-3xl">
-          <div className="text-center mb-6">
-            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-md mb-3 text-white">
-              <BookOpen className="h-7 w-7" />
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-3 w-full max-w-[360px] rounded-[26px] border border-slate-200 bg-white/95 p-4 shadow-[0_20px_50px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+              <img src="/logo.jpeg" alt="MaargMitra logo" className="mx-auto h-24 w-auto object-contain" />
             </div>
             <h1 className="text-2xl font-black text-gray-900">Create your MaargMitra Account</h1>
             <p className="mt-1 text-xs text-gray-500">मार्गमित्र में आपका स्वागत है — निःशुल्क करियर मार्गदर्शन पोर्टल</p>

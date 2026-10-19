@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showLogoPreview, setShowLogoPreview] = useState(false);
 
   const navLinks = [
     { to: '/careers', label: 'Careers' },
@@ -47,20 +48,25 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 backdrop-blur-xl shadow-xl text-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8" aria-label="Main navigation">
-        {/* Logo — Always navigates to main landing page */}
-        <Link to="/" className="flex items-center gap-2.5 group">
+        {/* Logo preview */}
+        <button
+          type="button"
+          onClick={() => setShowLogoPreview(true)}
+          className="group flex items-center gap-2.5 text-left"
+          aria-label="Open MaargMitra logo preview"
+        >
           <img
             src="/logo.jpeg"
             alt="MaargMitra logo"
-            className="h-10 w-10 rounded-xl object-cover border border-white/10 bg-slate-900 shadow-md group-hover:scale-105 transition-transform"
+            className="h-11 w-auto max-w-[200px] object-contain rounded-lg bg-transparent transition-transform group-hover:scale-[1.02]"
           />
-          <div className="flex flex-col leading-none">
+          <div className="flex flex-col leading-none text-left">
             <span className="text-base font-black tracking-tight text-white flex items-center gap-1.5">
               मार्गमित्र <span className="text-amber-400 font-extrabold text-xs tracking-wider">MaargMitra</span>
             </span>
             <span className="text-[10px] text-slate-400 font-medium">AI Vocational & Career Guidance</span>
           </div>
-        </Link>
+        </button>
 
         {/* Desktop nav */}
         <div className="hidden lg:flex items-center gap-1.5">
@@ -169,6 +175,34 @@ export default function Navbar() {
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </nav>
+
+      {showLogoPreview && (
+        <div
+          className="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm"
+          onClick={() => setShowLogoPreview(false)}
+        >
+          <div
+            className="fixed left-1/2 top-1/2 z-[70] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-700 bg-slate-900/95 p-4 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex w-full items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-slate-200">MaargMitra Logo</p>
+              <button
+                type="button"
+                onClick={() => setShowLogoPreview(false)}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+            <img
+              src="/logo.jpeg"
+              alt="MaargMitra full logo"
+              className="mx-auto block h-auto max-h-[70vh] w-full rounded-xl object-contain bg-slate-950"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Mobile menu */}
       {mobileOpen && (
