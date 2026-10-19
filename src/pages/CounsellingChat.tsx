@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, MessageCircle, Bot, User, AlertTriangle, Mic, VolumeX } from 'lucide-react';
+import { Send, MessageCircle, Bot, User, AlertTriangle, Mic, VolumeX, Volume2 } from 'lucide-react';
 import { counsellingApi, parseApiError } from '../services/api';
 import type { CounsellingMessage, CounsellingResponse } from '../types';
 import { LoadingSpinner } from '../components/LoadingState';
@@ -230,7 +230,9 @@ export default function CounsellingChat() {
         source_refs: res.source_refs,
       };
       setMessages((prev) => [...prev, assistantMsg]);
-      speakText(res.answer, language);
+
+      // Voice output is intentionally manual-only on this page.
+      // The assistant should not begin speaking automatically when the user types a message.
 
       if (res.needs_human_followup) {
         const followupMsg: CounsellingMessage = {
@@ -347,6 +349,18 @@ export default function CounsellingChat() {
                   }`}>
                     {msg.message_text}
                   </div>
+                  {msg.role === 'assistant' && (
+                    <button
+                      type="button"
+                      onClick={() => speakText(msg.message_text, language)}
+                      disabled={!voiceSupported}
+                      className="ml-1 inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 text-[10px] text-gray-600 hover:border-green-300 hover:text-green-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                      aria-label="Read this answer aloud"
+                    >
+                      <Volume2 className="h-3 w-3" />
+                      Read aloud
+                    </button>
+                  )}
                   {msg.source_refs && msg.source_refs.length > 0 && (
                     <div className="px-2">
                       <p className="text-xs text-gray-400">Sources:</p>
@@ -426,7 +440,7 @@ export default function CounsellingChat() {
           </div>
           <p className="mt-1 text-xs text-gray-400 text-center">
             {voiceSupported
-              ? 'Use the mic to speak your question. The AI will answer in the selected language and read it aloud.'
+              ? 'Use the mic only when you want to speak. The assistant will not start listening or speaking automatically while you type.'
               : 'Voice input needs browser microphone support. Please use a Chrome/Edge browser and allow mic permission, or type your question instead.'}
           </p>
         </div>
