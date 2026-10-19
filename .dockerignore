@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.agent
+.gemini
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env.local
+.vscode
+.idea

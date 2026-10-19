@@ -16,10 +16,13 @@ except Exception:
 
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.ai_service import generate_counselling_reply
 from app.config import settings
@@ -69,10 +72,14 @@ from app.security import create_access_token, get_current_user_email, hash_passw
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
 
+cors_origins_list = [origin.strip() for origin in settings.cors_origins.split(',') if origin.strip()]
+is_wildcard = "*" in cors_origins_list
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.cors_origins.split(',') if origin.strip()],
-    allow_credentials=True,
+    allow_origins=["*"] if is_wildcard else cors_origins_list,
+    allow_origin_regex=None if is_wildcard else r"https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*\.netlify\.app|.*\.onrender\.com|.*\.railway\.app)(:\d+)?",
+    allow_credentials=not is_wildcard,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -507,6 +514,29 @@ def get_my_roadmap(current_email: str = Depends(get_current_user_email)):
             RoadmapStep(step=6, title='First Job / Self Employment', description='Apply for Junior Electrician roles or start as an independent contractor.', duration='Ongoing', completed=False),
         ]
     )
+
+
+# ── Frontend SPA Static Hosting (Unified Deployment) ─────────────────────────
+FRONTEND_DIST_CANDIDATES = [
+    Path(__file__).resolve().parent.parent.parent / 'dist',
+    Path('/app/dist'),
+    Path('dist'),
+]
+FRONTEND_DIST = next((p for p in FRONTEND_DIST_CANDIDATES if (p / 'index.html').is_file()), None)
+
+if FRONTEND_DIST:
+    assets_dir = FRONTEND_DIST / 'assets'
+    if assets_dir.is_dir():
+        app.mount('/assets', StaticFiles(directory=str(assets_dir)), name='assets')
+
+    @app.get('/{full_path:path}', include_in_schema=False)
+    def serve_frontend_spa(full_path: str):
+        if full_path.startswith('api/') or full_path in ('health', 'docs', 'redoc', 'openapi.json'):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Not Found')
+        target_file = FRONTEND_DIST / full_path
+        if full_path and target_file.is_file():
+            return FileResponse(str(target_file))
+        return FileResponse(str(FRONTEND_DIST / 'index.html'))
 
 
 if __name__ == '__main__':
